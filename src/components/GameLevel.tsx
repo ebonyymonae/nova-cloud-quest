@@ -6,6 +6,8 @@ import { Level } from '../types/game';
 import EC2Challenge from './challenges/EC2Challenge';
 import IAMChallenge from './challenges/IAMChallenge';
 import TerraformChallenge from './challenges/TerraformChallenge';
+import TroubleshootingChallenge from './challenges/TroubleshootingChallenge';
+import InfrastructureChallenge from './challenges/InfrastructureChallenge';
 
 interface GameLevelProps {
   level: Level;
@@ -34,6 +36,16 @@ const GameLevel: React.FC<GameLevelProps> = ({ level, onComplete, onBack }) => {
           intro: "Nova: 'Infrastructure as Code sounds intimidating... How do I use Terraform to create a VPC?'",
           success: "Echo: 'Outstanding! You've just experienced the power of Infrastructure as Code. This VPC will be reproducible and version-controlled.'"
         };
+      case 'troubleshooting':
+        return {
+          intro: "Echo: 'Time for some real-world problem solving, Nova. When things go wrong in production, you need to think fast and systematically.'",
+          success: "Nova: 'I feel much more confident about handling AWS issues now. Troubleshooting is like detective work!'"
+        };
+      case 'infrastructure-design':
+        return {
+          intro: "Nova: 'This client needs a highly available architecture. How do I design something that won't fail?'",
+          success: "Echo: 'Perfect! You're thinking like a true cloud architect now. High availability requires planning for failure at every level.'"
+        };
       default:
         return {
           intro: "Echo: 'Ready for your next challenge, Nova?'",
@@ -50,6 +62,10 @@ const GameLevel: React.FC<GameLevelProps> = ({ level, onComplete, onBack }) => {
         return <IAMChallenge onComplete={(success) => setChallengeComplete(success)} />;
       case 'terraform-vpc':
         return <TerraformChallenge onComplete={(success) => setChallengeComplete(success)} />;
+      case 'troubleshooting':
+        return <TroubleshootingChallenge onComplete={(success) => setChallengeComplete(success)} />;
+      case 'infrastructure-design':
+        return <InfrastructureChallenge onComplete={(success) => setChallengeComplete(success)} />;
       default:
         return (
           <div className="text-center py-8">

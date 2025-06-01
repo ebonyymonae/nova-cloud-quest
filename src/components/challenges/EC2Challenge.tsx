@@ -73,6 +73,17 @@ const EC2Challenge: React.FC<EC2ChallengeProps> = ({ onComplete }) => {
     };
   };
 
+  const getOptionClassName = (questionType: keyof typeof questions, optionId: string, selectedValue: string) => {
+    const baseClasses = "flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer";
+    const isSelected = selectedValue === optionId;
+    
+    if (isSelected) {
+      return `${baseClasses} border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50`;
+    }
+    
+    return `${baseClasses} border-gray-600 hover:border-gray-500 hover:bg-gray-800/50`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -85,14 +96,16 @@ const EC2Challenge: React.FC<EC2ChallengeProps> = ({ onComplete }) => {
         <CardContent className="p-6">
           <h4 className="text-lg font-semibold text-blue-400 mb-4">1. {questions.ami.question}</h4>
           <RadioGroup value={selectedAMI} onValueChange={setSelectedAMI}>
-            {questions.ami.options.map((option) => (
-              <div key={option.id} className="flex items-center space-x-2">
-                <RadioGroupItem value={option.id} id={option.id} />
-                <Label htmlFor={option.id} className="text-gray-300 cursor-pointer">
-                  {option.label}
-                </Label>
-              </div>
-            ))}
+            <div className="space-y-3">
+              {questions.ami.options.map((option) => (
+                <div key={option.id} className={getOptionClassName('ami', option.id, selectedAMI)}>
+                  <RadioGroupItem value={option.id} id={option.id} />
+                  <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </RadioGroup>
           {showFeedback && selectedAMI && (
             <div className={`mt-3 p-3 rounded-lg bg-black/40 ${getAnswerFeedback('ami', selectedAMI).color}`}>
@@ -107,14 +120,16 @@ const EC2Challenge: React.FC<EC2ChallengeProps> = ({ onComplete }) => {
         <CardContent className="p-6">
           <h4 className="text-lg font-semibold text-green-400 mb-4">2. {questions.instanceType.question}</h4>
           <RadioGroup value={selectedInstanceType} onValueChange={setSelectedInstanceType}>
-            {questions.instanceType.options.map((option) => (
-              <div key={option.id} className="flex items-center space-x-2">
-                <RadioGroupItem value={option.id} id={option.id} />
-                <Label htmlFor={option.id} className="text-gray-300 cursor-pointer">
-                  {option.label}
-                </Label>
-              </div>
-            ))}
+            <div className="space-y-3">
+              {questions.instanceType.options.map((option) => (
+                <div key={option.id} className={getOptionClassName('instanceType', option.id, selectedInstanceType)}>
+                  <RadioGroupItem value={option.id} id={option.id} />
+                  <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </RadioGroup>
           {showFeedback && selectedInstanceType && (
             <div className={`mt-3 p-3 rounded-lg bg-black/40 ${getAnswerFeedback('instanceType', selectedInstanceType).color}`}>
@@ -129,14 +144,16 @@ const EC2Challenge: React.FC<EC2ChallengeProps> = ({ onComplete }) => {
         <CardContent className="p-6">
           <h4 className="text-lg font-semibold text-purple-400 mb-4">3. {questions.securityGroup.question}</h4>
           <RadioGroup value={selectedSecurityGroup} onValueChange={setSelectedSecurityGroup}>
-            {questions.securityGroup.options.map((option) => (
-              <div key={option.id} className="flex items-center space-x-2">
-                <RadioGroupItem value={option.id} id={option.id} />
-                <Label htmlFor={option.id} className="text-gray-300 cursor-pointer">
-                  {option.label}
-                </Label>
-              </div>
-            ))}
+            <div className="space-y-3">
+              {questions.securityGroup.options.map((option) => (
+                <div key={option.id} className={getOptionClassName('securityGroup', option.id, selectedSecurityGroup)}>
+                  <RadioGroupItem value={option.id} id={option.id} />
+                  <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </RadioGroup>
           {showFeedback && selectedSecurityGroup && (
             <div className={`mt-3 p-3 rounded-lg bg-black/40 ${getAnswerFeedback('securityGroup', selectedSecurityGroup).color}`}>

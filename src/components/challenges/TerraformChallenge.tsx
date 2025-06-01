@@ -1,319 +1,173 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 interface TerraformChallengeProps {
   onComplete: (success: boolean) => void;
 }
 
-interface CodeBlock {
-  id: string;
-  content: string;
-  type: 'provider' | 'vpc' | 'subnet-public' | 'subnet-private' | 'igw' | 'route-table';
-}
-
 const TerraformChallenge: React.FC<TerraformChallengeProps> = ({ onComplete }) => {
-  const [draggedItem, setDraggedItem] = useState<string | null>(null);
-  const [orderedBlocks, setOrderedBlocks] = useState<string[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState('');
+  const [selectedVPC, setSelectedVPC] = useState('');
+  const [selectedSubnet, setSelectedSubnet] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
 
-  const codeBlocks: CodeBlock[] = [
-    {
-      id: 'provider',
-      content: `provider "aws" {
-  region = "us-west-2"
-}`,
-      type: 'provider'
+  const questions = {
+    order: {
+      question: "What's the correct order for creating VPC infrastructure with Terraform?",
+      options: [
+        { id: 'wrong1', label: 'Subnets → VPC → Provider → Internet Gateway', explanation: 'Subnets cannot exist without a VPC being created first' },
+        { id: 'correct', label: 'Provider → VPC → Internet Gateway → Subnets', explanation: 'Perfect! This follows proper dependency order' },
+        { id: 'wrong2', label: 'Internet Gateway → Provider → VPC → Subnets', explanation: 'Internet Gateway needs a VPC to attach to' },
+        { id: 'wrong3', label: 'VPC → Provider → Subnets → Internet Gateway', explanation: 'Provider configuration must come first' }
+      ],
+      correct: 'correct'
     },
-    {
-      id: 'vpc',
-      content: `resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-  
-  tags = {
-    Name = "skystack-vpc"
-  }
-}`,
-      type: 'vpc'
+    vpc: {
+      question: "Which CIDR block is best for Nova's VPC?",
+      options: [
+        { id: '10.0.0.0/16', label: '10.0.0.0/16 (65,536 IPs)', explanation: 'Excellent choice! Provides plenty of IP addresses with good organization' },
+        { id: '10.0.0.0/24', label: '10.0.0.0/24 (256 IPs)', explanation: 'Too small - not enough room for multiple subnets and growth' },
+        { id: '0.0.0.0/0', label: '0.0.0.0/0 (All IPs)', explanation: 'Invalid for VPC - this represents the entire internet!' },
+        { id: '192.168.1.0/16', label: '192.168.1.0/16 (65,536 IPs)', explanation: 'Good size but /16 networks typically start at .0.0, not .1.0' }
+      ],
+      correct: '10.0.0.0/16'
     },
-    {
-      id: 'igw',
-      content: `resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-  
-  tags = {
-    Name = "skystack-igw"
-  }
-}`,
-      type: 'igw'
-    },
-    {
-      id: 'subnet-public',
-      content: `resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "us-west-2a"
-  map_public_ip_on_launch = true
-  
-  tags = {
-    Name = "skystack-public-subnet"
-  }
-}`,
-      type: 'subnet-public'
-    },
-    {
-      id: 'subnet-private',
-      content: `resource "aws_subnet" "private" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-west-2b"
-  
-  tags = {
-    Name = "skystack-private-subnet"
-  }
-}`,
-      type: 'subnet-private'
-    },
-    {
-      id: 'route-table',
-      content: `resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-  
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
-  }
-  
-  tags = {
-    Name = "skystack-public-rt"
-  }
-}
-
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public.id
-}`,
-      type: 'route-table'
+    subnet: {
+      question: "How should Nova configure her public subnet?",
+      options: [
+        { id: 'wrong1', label: 'map_public_ip_on_launch = false', explanation: 'This would make it private - instances won\'t get public IPs' },
+        { id: 'correct', label: 'map_public_ip_on_launch = true + Internet Gateway route', explanation: 'Correct! This makes the subnet truly public with internet access' },
+        { id: 'wrong2', label: 'Only create route table, no map_public_ip', explanation: 'Without map_public_ip, instances won\'t get public IPs automatically' },
+        { id: 'wrong3', label: 'Use NAT Gateway instead of Internet Gateway', explanation: 'NAT Gateway is for private subnets to access internet, not for public access' }
+      ],
+      correct: 'correct'
     }
-  ];
-
-  const correctOrder = ['provider', 'vpc', 'igw', 'subnet-public', 'subnet-private', 'route-table'];
-
-  const handleDragStart = useCallback((e: React.DragEvent, blockId: string) => {
-    setDraggedItem(blockId);
-    e.dataTransfer.effectAllowed = 'move';
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (draggedItem) {
-      setOrderedBlocks(prev => {
-        if (!prev.includes(draggedItem)) {
-          return [...prev, draggedItem];
-        }
-        return prev;
-      });
-      setDraggedItem(null);
-    }
-  }, [draggedItem]);
-
-  const removeBlock = (blockId: string) => {
-    setOrderedBlocks(prev => prev.filter(id => id !== blockId));
   };
 
-  const checkOrder = () => {
-    const isCorrect = orderedBlocks.length === correctOrder.length && 
-                     orderedBlocks.every((block, index) => block === correctOrder[index]);
+  const checkAnswers = () => {
+    const allCorrect = 
+      selectedOrder === questions.order.correct &&
+      selectedVPC === questions.vpc.correct &&
+      selectedSubnet === questions.subnet.correct;
     
     setShowFeedback(true);
     
-    if (isCorrect) {
+    if (allCorrect) {
       setTimeout(() => onComplete(true), 2000);
     }
   };
 
-  const availableBlocks = codeBlocks.filter(block => !orderedBlocks.includes(block.id));
-  const getBlockTypeColor = (type: string) => {
-    const colors = {
-      'provider': 'border-purple-500/50 bg-purple-500/10',
-      'vpc': 'border-blue-500/50 bg-blue-500/10',
-      'subnet-public': 'border-green-500/50 bg-green-500/10',
-      'subnet-private': 'border-yellow-500/50 bg-yellow-500/10',
-      'igw': 'border-cyan-500/50 bg-cyan-500/10',
-      'route-table': 'border-red-500/50 bg-red-500/10'
+  const getAnswerFeedback = (questionType: keyof typeof questions, selectedValue: string) => {
+    const question = questions[questionType];
+    const selectedOption = question.options.find(opt => opt.id === selectedValue);
+    const isCorrect = selectedValue === question.correct;
+    
+    return {
+      isCorrect,
+      explanation: selectedOption?.explanation || '',
+      color: isCorrect ? 'text-green-400' : 'text-red-400'
     };
-    return colors[type as keyof typeof colors] || 'border-gray-500/50 bg-gray-500/10';
+  };
+
+  const getOptionClassName = (questionType: keyof typeof questions, optionId: string, selectedValue: string) => {
+    const baseClasses = "flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer";
+    const isSelected = selectedValue === optionId;
+    
+    if (isSelected) {
+      return `${baseClasses} border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50`;
+    }
+    
+    return `${baseClasses} border-gray-600 hover:border-gray-500 hover:bg-gray-800/50`;
   };
 
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-cyan-400 mb-2">Terraform VPC Configuration</h3>
-        <p className="text-gray-300">Drag and drop the Terraform blocks in the correct order!</p>
+        <p className="text-gray-300">Help Nova understand Infrastructure as Code best practices!</p>
       </div>
 
-      {/* Instructions */}
+      {/* Resource Order */}
       <Card className="bg-black/30 border-blue-500/30">
         <CardContent className="p-6">
-          <h4 className="text-lg font-semibold text-blue-400 mb-3">📋 Your Mission</h4>
-          <p className="text-gray-300 mb-4">
-            Nova needs to create a VPC with both public and private subnets. Arrange the Terraform blocks in the logical order:
-          </p>
-          <ol className="text-gray-300 space-y-2">
-            <li className="flex items-center space-x-2">
-              <span className="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-sm">1</span>
-              <span>Provider configuration</span>
-            </li>
-            <li className="flex items-center space-x-2">
-              <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">2</span>
-              <span>VPC creation</span>
-            </li>
-            <li className="flex items-center space-x-2">
-              <span className="bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded text-sm">3</span>
-              <span>Internet Gateway</span>
-            </li>
-            <li className="flex items-center space-x-2">
-              <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-sm">4</span>
-              <span>Public subnet</span>
-            </li>
-            <li className="flex items-center space-x-2">
-              <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-sm">5</span>
-              <span>Private subnet</span>
-            </li>
-            <li className="flex items-center space-x-2">
-              <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm">6</span>
-              <span>Route table and association</span>
-            </li>
-          </ol>
+          <h4 className="text-lg font-semibold text-blue-400 mb-4">1. {questions.order.question}</h4>
+          <RadioGroup value={selectedOrder} onValueChange={setSelectedOrder}>
+            <div className="space-y-3">
+              {questions.order.options.map((option) => (
+                <div key={option.id} className={getOptionClassName('order', option.id, selectedOrder)}>
+                  <RadioGroupItem value={option.id} id={option.id} />
+                  <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </RadioGroup>
+          {showFeedback && selectedOrder && (
+            <div className={`mt-3 p-3 rounded-lg bg-black/40 ${getAnswerFeedback('order', selectedOrder).color}`}>
+              {getAnswerFeedback('order', selectedOrder).explanation}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Available Blocks */}
-        <div>
-          <h4 className="text-lg font-semibold text-gray-300 mb-4">Available Terraform Blocks</h4>
-          <div className="space-y-3">
-            {availableBlocks.map((block) => (
-              <Card 
-                key={block.id}
-                className={`cursor-move transition-all hover:scale-105 ${getBlockTypeColor(block.type)}`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, block.id)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-semibold text-gray-400 uppercase">
-                      {block.type.replace('-', ' ')}
-                    </span>
-                    <span className="text-gray-500">📁</span>
-                  </div>
-                  <pre className="text-xs text-gray-300 overflow-x-auto">
-                    {block.content}
-                  </pre>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Drop Zone */}
-        <div>
-          <h4 className="text-lg font-semibold text-gray-300 mb-4">Your Terraform Configuration</h4>
-          <div 
-            className="min-h-[400px] border-2 border-dashed border-gray-600 rounded-lg p-4 transition-colors"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            {orderedBlocks.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                <div className="text-center">
-                  <div className="text-4xl mb-2">📥</div>
-                  <p>Drag Terraform blocks here</p>
+      {/* VPC CIDR */}
+      <Card className="bg-black/30 border-green-500/30">
+        <CardContent className="p-6">
+          <h4 className="text-lg font-semibold text-green-400 mb-4">2. {questions.vpc.question}</h4>
+          <RadioGroup value={selectedVPC} onValueChange={setSelectedVPC}>
+            <div className="space-y-3">
+              {questions.vpc.options.map((option) => (
+                <div key={option.id} className={getOptionClassName('vpc', option.id, selectedVPC)}>
+                  <RadioGroupItem value={option.id} id={option.id} />
+                  <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
+                    {option.label}
+                  </Label>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {orderedBlocks.map((blockId, index) => {
-                  const block = codeBlocks.find(b => b.id === blockId)!;
-                  return (
-                    <Card 
-                      key={blockId}
-                      className={`${getBlockTypeColor(block.type)} relative`}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center space-x-2">
-                            <span className="bg-gray-700 text-white px-2 py-1 rounded text-sm font-bold">
-                              {index + 1}
-                            </span>
-                            <span className="text-sm font-semibold text-gray-400 uppercase">
-                              {block.type.replace('-', ' ')}
-                            </span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => removeBlock(blockId)}
-                            className="text-red-400 border-red-400/30 hover:bg-red-500/20"
-                          >
-                            ✕
-                          </Button>
-                        </div>
-                        <pre className="text-xs text-gray-300 overflow-x-auto">
-                          {block.content}
-                        </pre>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+              ))}
+            </div>
+          </RadioGroup>
+          {showFeedback && selectedVPC && (
+            <div className={`mt-3 p-3 rounded-lg bg-black/40 ${getAnswerFeedback('vpc', selectedVPC).color}`}>
+              {getAnswerFeedback('vpc', selectedVPC).explanation}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Feedback */}
-      {showFeedback && (
-        <Card className={`${orderedBlocks.length === correctOrder.length && 
-          orderedBlocks.every((block, index) => block === correctOrder[index]) 
-          ? 'bg-green-900/50 border-green-500/30' 
-          : 'bg-red-900/50 border-red-500/30'}`}>
-          <CardContent className="p-6">
-            {orderedBlocks.length === correctOrder.length && 
-             orderedBlocks.every((block, index) => block === correctOrder[index]) ? (
-              <div>
-                <h5 className="text-green-400 font-semibold mb-2">🎉 Perfect Infrastructure!</h5>
-                <p className="text-green-300">
-                  Excellent! Nova has created a well-structured VPC with proper dependencies. 
-                  The provider comes first, then VPC, followed by the internet gateway, subnets, and finally routing.
-                </p>
-              </div>
-            ) : (
-              <div>
-                <h5 className="text-red-400 font-semibold mb-2">🔧 Resource Dependencies</h5>
-                <p className="text-red-300">
-                  Remember: Terraform resources must be ordered by their dependencies. 
-                  A subnet needs a VPC to exist first, and route tables need both VPC and internet gateway.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Subnet Configuration */}
+      <Card className="bg-black/30 border-purple-500/30">
+        <CardContent className="p-6">
+          <h4 className="text-lg font-semibold text-purple-400 mb-4">3. {questions.subnet.question}</h4>
+          <RadioGroup value={selectedSubnet} onValueChange={setSelectedSubnet}>
+            <div className="space-y-3">
+              {questions.subnet.options.map((option) => (
+                <div key={option.id} className={getOptionClassName('subnet', option.id, selectedSubnet)}>
+                  <RadioGroupItem value={option.id} id={option.id} />
+                  <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </RadioGroup>
+          {showFeedback && selectedSubnet && (
+            <div className={`mt-3 p-3 rounded-lg bg-black/40 ${getAnswerFeedback('subnet', selectedSubnet).color}`}>
+              {getAnswerFeedback('subnet', selectedSubnet).explanation}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Submit Button */}
       <div className="text-center">
         <Button 
-          onClick={checkOrder}
-          disabled={orderedBlocks.length !== correctOrder.length || showFeedback}
+          onClick={checkAnswers}
+          disabled={!selectedOrder || !selectedVPC || !selectedSubnet || showFeedback}
           className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 px-8 py-3 text-lg font-semibold"
         >
           {showFeedback ? 'Checking Configuration...' : 'Apply Terraform Config!'}
@@ -325,11 +179,10 @@ resource "aws_route_table_association" "public" {
         <CardContent className="p-4">
           <h5 className="text-yellow-400 font-semibold mb-2">💡 Echo's IaC Tips:</h5>
           <ul className="text-sm text-gray-300 space-y-1">
-            <li>• Provider configuration always comes first</li>
-            <li>• Create foundational resources (VPC) before dependent ones</li>
-            <li>• Internet Gateway needs VPC to exist</li>
-            <li>• Subnets depend on VPC being created</li>
-            <li>• Route tables reference other resources via interpolation</li>
+            <li>• Terraform resources must be created in dependency order</li>
+            <li>• /16 networks provide good balance of size and organization</li>
+            <li>• Public subnets need both public IP mapping and internet routes</li>
+            <li>• Always plan your IP address space before creating infrastructure</li>
           </ul>
         </CardContent>
       </Card>

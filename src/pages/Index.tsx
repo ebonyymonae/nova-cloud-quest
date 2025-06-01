@@ -9,7 +9,7 @@ import { GameState, Level } from '../types/game';
 const Index = () => {
   const [gameState, setGameState] = useState<GameState>('intro');
   const [currentLevel, setCurrentLevel] = useState<Level | null>(null);
-  const [playerProgress, setPlayerProgress] = useState({
+  const [sessionProgress, setSessionProgress] = useState({
     xp: 0,
     level: 1,
     badges: [],
@@ -26,7 +26,7 @@ const Index = () => {
   };
 
   const handleLevelComplete = (xpGained: number, badgeEarned?: string) => {
-    setPlayerProgress(prev => ({
+    setSessionProgress(prev => ({
       ...prev,
       xp: prev.xp + xpGained,
       badges: badgeEarned ? [...prev.badges, badgeEarned] : prev.badges,
@@ -50,7 +50,7 @@ const Index = () => {
         }}></div>
         
         {/* Character Profile - Always visible */}
-        <CharacterProfile progress={playerProgress} />
+        <CharacterProfile progress={sessionProgress} />
 
         {/* Main Game Content */}
         <div className="relative z-10">
@@ -61,7 +61,7 @@ const Index = () => {
           {gameState === 'levelSelect' && (
             <LevelSelect 
               onLevelSelect={handleLevelSelect}
-              playerProgress={playerProgress}
+              playerProgress={sessionProgress}
             />
           )}
           

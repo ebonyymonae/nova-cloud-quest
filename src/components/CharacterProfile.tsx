@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { PlayerProgress } from '../types/game';
 
 interface CharacterProfileProps {
@@ -12,17 +11,16 @@ const CharacterProfile: React.FC<CharacterProfileProps> = ({ progress }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const skillBadges = [
-    { name: 'EC2 Novice', icon: '🖥️', color: 'bg-blue-500' },
-    { name: 'Security Conscious', icon: '🔒', color: 'bg-red-500' },
-    { name: 'IaC Architect', icon: '🏗️', color: 'bg-green-500' },
-    { name: 'Pipeline Pro', icon: '⚡', color: 'bg-yellow-500' },
-    { name: 'Container Captain', icon: '🐳', color: 'bg-cyan-500' },
-    { name: 'Cloud Architect', icon: '☁️', color: 'bg-purple-500' }
+    { name: 'EC2 Novice', icon: '🖥️' },
+    { name: 'Security Conscious', icon: '🔒' },
+    { name: 'IaC Architect', icon: '🏗️' },
+    { name: 'Pipeline Pro', icon: '⚡' },
+    { name: 'Container Captain', icon: '🐳' },
+    { name: 'Cloud Architect', icon: '☁️' }
   ];
 
-  const currentLevelXp = progress.level * 200;
-  const nextLevelXp = (progress.level + 1) * 200;
-  const xpProgress = ((progress.xp % 200) / 200) * 100;
+  const xpForNextLevel = 200;
+  const xpProgress = ((progress.xp % xpForNextLevel) / xpForNextLevel) * 100;
 
   return (
     <div className="fixed top-4 left-4 z-50">
@@ -36,7 +34,7 @@ const CharacterProfile: React.FC<CharacterProfileProps> = ({ progress }) => {
             <div className="text-3xl">👩‍💻</div>
             <div>
               <h3 className="font-bold text-cyan-400">Nova</h3>
-              <p className="text-xs text-gray-300">Level {progress.level} Engineer</p>
+              <p className="text-xs text-gray-300">Session Progress</p>
             </div>
             <div className="text-yellow-400 text-sm">
               {progress.xp} XP
@@ -56,10 +54,10 @@ const CharacterProfile: React.FC<CharacterProfileProps> = ({ progress }) => {
             <div className="mt-4 animate-fade-in">
               <div className="border-t border-gray-600 pt-4">
                 <h4 className="text-sm font-semibold text-purple-400 mb-2">
-                  Earned Badges ({progress.badges.length}/6)
+                  Session Badges ({progress.badges.length}/6)
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {skillBadges.map((badge, index) => {
+                  {skillBadges.map((badge) => {
                     const earned = progress.badges.includes(badge.name);
                     return (
                       <div 
@@ -79,7 +77,7 @@ const CharacterProfile: React.FC<CharacterProfileProps> = ({ progress }) => {
                 
                 <div className="mt-4 text-center">
                   <p className="text-xs text-gray-400">
-                    Next Level: {nextLevelXp - progress.xp} XP needed
+                    Current session • {progress.completedLevels.length} levels completed
                   </p>
                 </div>
               </div>

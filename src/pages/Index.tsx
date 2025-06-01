@@ -1,11 +1,76 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState } from 'react';
+import GameIntro from '../components/GameIntro';
+import LevelSelect from '../components/LevelSelect';
+import GameLevel from '../components/GameLevel';
+import CharacterProfile from '../components/CharacterProfile';
+import { GameState, Level } from '../types/game';
 
 const Index = () => {
+  const [gameState, setGameState] = useState<GameState>('intro');
+  const [currentLevel, setCurrentLevel] = useState<Level | null>(null);
+  const [playerProgress, setPlayerProgress] = useState({
+    xp: 0,
+    level: 1,
+    badges: [],
+    completedLevels: []
+  });
+
+  const handleStartGame = () => {
+    setGameState('levelSelect');
+  };
+
+  const handleLevelSelect = (level: Level) => {
+    setCurrentLevel(level);
+    setGameState('playing');
+  };
+
+  const handleLevelComplete = (xpGained: number, badgeEarned?: string) => {
+    setPlayerProgress(prev => ({
+      ...prev,
+      xp: prev.xp + xpGained,
+      badges: badgeEarned ? [...prev.badges, badgeEarned] : prev.badges,
+      completedLevels: currentLevel ? [...prev.completedLevels, currentLevel.id] : prev.completedLevels
+    }));
+    setGameState('levelSelect');
+    setCurrentLevel(null);
+  };
+
+  const handleBackToMenu = () => {
+    setGameState('levelSelect');
+    setCurrentLevel(null);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+      <div className="relative">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="7" cy="7" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        
+        {/* Character Profile - Always visible */}
+        <CharacterProfile progress={playerProgress} />
+
+        {/* Main Game Content */}
+        <div className="relative z-10">
+          {gameState === 'intro' && (
+            <GameIntro onStartGame={handleStartGame} />
+          )}
+          
+          {gameState === 'levelSelect' && (
+            <LevelSelect 
+              onLevelSelect={handleLevelSelect}
+              playerProgress={playerProgress}
+            />
+          )}
+          
+          {gameState === 'playing' && currentLevel && (
+            <GameLevel 
+              level={currentLevel}
+              onComplete={handleLevelComplete}
+              onBack={handleBackToMenu}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

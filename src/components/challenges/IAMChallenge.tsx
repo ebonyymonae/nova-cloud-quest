@@ -9,7 +9,7 @@ interface IAMChallengeProps {
 
 const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
 
@@ -80,12 +80,12 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
     if (showFeedback) return;
     
     const newAnswers = [...selectedAnswers];
-    newAnswers[currentQuestion] = optionIndex.toString();
+    newAnswers[currentQuestion] = optionIndex;
     setSelectedAnswers(newAnswers);
   };
 
   const handleSubmit = () => {
-    const currentAnswer = parseInt(selectedAnswers[currentQuestion]);
+    const currentAnswer = selectedAnswers[currentQuestion];
     const isCorrect = currentAnswer === questions[currentQuestion].correct;
     
     if (isCorrect) {
@@ -134,7 +134,7 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
           
           <div className="space-y-3">
             {currentQ.options.map((option, index) => {
-              const isSelected = selectedAnswer === index.toString();
+              const isSelected = selectedAnswer === index;
               const isCorrect = index === currentQ.correct;
               const isWrong = showFeedback && isSelected && !isCorrect;
               const shouldHighlight = showFeedback && isCorrect;
@@ -176,14 +176,14 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
 
           {showFeedback && (
             <div className={`mt-6 p-4 rounded-lg ${
-              parseInt(selectedAnswer) === currentQ.correct
+              selectedAnswer === currentQ.correct
                 ? 'bg-green-900/50 border border-green-500/30'
                 : 'bg-red-900/50 border border-red-500/30'
             }`}>
               <h5 className={`font-semibold mb-2 ${
-                parseInt(selectedAnswer) === currentQ.correct ? 'text-green-400' : 'text-red-400'
+                selectedAnswer === currentQ.correct ? 'text-green-400' : 'text-red-400'
               }`}>
-                {parseInt(selectedAnswer) === currentQ.correct ? '🎉 Correct!' : '❌ Not Quite'}
+                {selectedAnswer === currentQ.correct ? '🎉 Correct!' : '❌ Not Quite'}
               </h5>
               <p className="text-gray-300">{currentQ.explanation}</p>
             </div>
@@ -196,7 +196,7 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
         {!showFeedback ? (
           <Button 
             onClick={handleSubmit}
-            disabled={!selectedAnswer}
+            disabled={selectedAnswer === undefined}
             className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 px-8 py-3 text-lg font-semibold"
           >
             Submit Answer

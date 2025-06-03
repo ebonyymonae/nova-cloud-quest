@@ -76,7 +76,10 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
     }
   ];
 
-  const handleAnswerSelect = (optionIndex: number) => {
+  const handleAnswerSelect = (event: React.MouseEvent, optionIndex: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (showFeedback) return;
     
     const newAnswers = [...selectedAnswers];
@@ -84,7 +87,10 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
     setSelectedAnswers(newAnswers);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
     const currentAnswer = selectedAnswers[currentQuestion];
     const isCorrect = currentAnswer === questions[currentQuestion].correct;
     
@@ -95,7 +101,10 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
     setShowFeedback(true);
   };
 
-  const handleNext = () => {
+  const handleNext = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setShowFeedback(false);
@@ -140,10 +149,11 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
               const shouldHighlight = showFeedback && isCorrect;
               
               return (
-                <div
+                <button
                   key={index}
-                  onClick={() => handleAnswerSelect(index)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                  type="button"
+                  onClick={(e) => handleAnswerSelect(e, index)}
+                  className={`w-full p-4 rounded-lg border-2 text-left transition-all duration-200 ${
                     isSelected && !showFeedback
                       ? 'border-blue-500 bg-blue-500/20 text-blue-300'
                       : shouldHighlight
@@ -151,7 +161,8 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
                       : isWrong
                       ? 'border-red-500 bg-red-500/20 text-red-300'
                       : 'border-gray-600 bg-gray-800/50 text-gray-300 hover:border-gray-500'
-                  }`}
+                  } ${showFeedback ? 'cursor-default' : 'cursor-pointer hover:bg-gray-700/50'}`}
+                  disabled={showFeedback}
                 >
                   <div className="flex items-center space-x-3">
                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
@@ -169,7 +180,7 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
                     </div>
                     <span>{option}</span>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

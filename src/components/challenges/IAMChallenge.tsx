@@ -140,11 +140,10 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
               const shouldHighlight = showFeedback && isCorrect;
               
               return (
-                <button
+                <div
                   key={index}
                   onClick={() => handleAnswerSelect(index)}
-                  disabled={showFeedback}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                     isSelected && !showFeedback
                       ? 'border-blue-500 bg-blue-500/20 text-blue-300'
                       : shouldHighlight
@@ -170,7 +169,7 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
                     </div>
                     <span>{option}</span>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

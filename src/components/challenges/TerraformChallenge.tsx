@@ -73,17 +73,6 @@ const TerraformChallenge: React.FC<TerraformChallengeProps> = ({ onComplete }) =
     };
   };
 
-  const getOptionClassName = (questionType: keyof typeof questions, optionId: string, selectedValue: string) => {
-    const baseClasses = "flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer";
-    const isSelected = selectedValue === optionId;
-    
-    if (isSelected) {
-      return `${baseClasses} border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50`;
-    }
-    
-    return `${baseClasses} border-gray-600 hover:border-gray-500 hover:bg-gray-800/50`;
-  };
-
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
@@ -98,7 +87,11 @@ const TerraformChallenge: React.FC<TerraformChallengeProps> = ({ onComplete }) =
           <RadioGroup value={selectedOrder} onValueChange={setSelectedOrder}>
             <div className="space-y-3">
               {questions.order.options.map((option) => (
-                <div key={option.id} className={getOptionClassName('order', option.id, selectedOrder)}>
+                <div key={option.id} className={`flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                  selectedOrder === option.id
+                    ? 'border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50'
+                    : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                }`}>
                   <RadioGroupItem value={option.id} id={option.id} />
                   <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
                     {option.label}
@@ -122,7 +115,11 @@ const TerraformChallenge: React.FC<TerraformChallengeProps> = ({ onComplete }) =
           <RadioGroup value={selectedVPC} onValueChange={setSelectedVPC}>
             <div className="space-y-3">
               {questions.vpc.options.map((option) => (
-                <div key={option.id} className={getOptionClassName('vpc', option.id, selectedVPC)}>
+                <div key={option.id} className={`flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                  selectedVPC === option.id
+                    ? 'border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50'
+                    : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                }`}>
                   <RadioGroupItem value={option.id} id={option.id} />
                   <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
                     {option.label}
@@ -146,7 +143,11 @@ const TerraformChallenge: React.FC<TerraformChallengeProps> = ({ onComplete }) =
           <RadioGroup value={selectedSubnet} onValueChange={setSelectedSubnet}>
             <div className="space-y-3">
               {questions.subnet.options.map((option) => (
-                <div key={option.id} className={getOptionClassName('subnet', option.id, selectedSubnet)}>
+                <div key={option.id} className={`flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                  selectedSubnet === option.id
+                    ? 'border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50'
+                    : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                }`}>
                   <RadioGroupItem value={option.id} id={option.id} />
                   <Label htmlFor={option.id} className="text-gray-300 cursor-pointer flex-1">
                     {option.label}

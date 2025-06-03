@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,43 +22,43 @@ const LevelSelect: React.FC<LevelSelectProps> = ({ onLevelSelect, playerProgress
     },
     {
       id: 'iam-policy',
-      title: 'IAM Policy Creation',
-      description: 'Write a secure IAM policy to grant proper permissions',
+      title: 'IAM Security & Troubleshooting',
+      description: 'Master IAM policies, roles, and solve access issues',
       difficulty: 'beginner',
-      type: 'code-arrangement',
+      type: 'multiple-choice',
       xpReward: 150,
       badge: 'Security Conscious',
       prereq: ['ec2-basics']
     },
     {
       id: 'terraform-vpc',
-      title: 'Terraform VPC',
-      description: 'Use Infrastructure as Code to create a VPC with subnets',
+      title: 'Terraform VPC Configuration',
+      description: 'Use Infrastructure as Code to create a VPC with proper dependencies',
       difficulty: 'intermediate',
-      type: 'drag-drop',
+      type: 'multiple-choice',
       xpReward: 200,
       badge: 'IaC Architect',
       prereq: ['iam-policy']
     },
     {
-      id: 'cicd-debug',
-      title: 'Pipeline Troubleshooting',
-      description: 'Debug a broken CI/CD pipeline and get deployments flowing',
+      id: 'troubleshooting',
+      title: 'AWS Troubleshooting',
+      description: 'Debug common AWS issues and learn systematic problem-solving',
       difficulty: 'intermediate',
-      type: 'terminal',
+      type: 'multiple-choice',
       xpReward: 250,
-      badge: 'Pipeline Pro',
+      badge: 'Problem Solver',
       prereq: ['terraform-vpc']
     },
     {
-      id: 'docker-app',
-      title: 'Containerize Python App',
-      description: 'Create a Dockerfile and deploy a containerized application',
+      id: 'infrastructure-design',
+      title: 'Infrastructure Design',
+      description: 'Design highly available and scalable cloud architectures',
       difficulty: 'advanced',
-      type: 'code-arrangement',
+      type: 'multiple-choice',
       xpReward: 300,
-      badge: 'Container Captain',
-      prereq: ['cicd-debug']
+      badge: 'Cloud Architect',
+      prereq: ['troubleshooting']
     },
     {
       id: 'boss-presentation',
@@ -68,8 +67,8 @@ const LevelSelect: React.FC<LevelSelectProps> = ({ onLevelSelect, playerProgress
       difficulty: 'advanced',
       type: 'multiple-choice',
       xpReward: 500,
-      badge: 'Cloud Architect',
-      prereq: ['docker-app']
+      badge: 'Master Architect',
+      prereq: ['infrastructure-design']
     }
   ];
 

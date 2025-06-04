@@ -9,13 +9,11 @@ interface IAMChallengeProps {
 
 const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [score, setScore] = useState(0);
 
   const questions = [
     {
-      id: 1,
       question: "Nova needs to create an IAM policy for developers to access only the 'dev-bucket' S3 bucket. Which principle should she follow?",
       options: [
         "Grant full S3 access to make development easier",
@@ -24,10 +22,14 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
         "Grant administrator access temporarily"
       ],
       correct: 1,
-      explanation: "The principle of least privilege means granting only the minimum permissions necessary for users to perform their job functions. This reduces security risks."
+      explanations: [
+        "This violates security principles and creates unnecessary risk",
+        "Perfect! The principle of least privilege means granting only the minimum permissions necessary for users to perform their job functions",
+        "PowerUserAccess is too broad for this specific requirement",
+        "Administrator access should never be granted temporarily for specific resource access"
+      ]
     },
     {
-      id: 2,
       question: "A developer can't access an S3 bucket despite having an IAM policy that allows it. What should Nova check first?",
       options: [
         "The bucket's public access settings",
@@ -36,10 +38,14 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
         "The S3 service status page"
       ],
       correct: 1,
-      explanation: "IAM follows an explicit DENY model - if any policy contains an explicit DENY, it overrides all ALLOW statements. Bucket policies can also restrict access."
+      explanations: [
+        "Public access settings don't affect IAM user access",
+        "Correct! IAM follows an explicit DENY model - if any policy contains an explicit DENY, it overrides all ALLOW statements",
+        "Network connectivity wouldn't cause an access denied error specifically",
+        "Service status issues would cause different types of errors"
+      ]
     },
     {
-      id: 3,
       question: "Nova wants to allow a Lambda function to read from DynamoDB. What's the best approach?",
       options: [
         "Hardcode AWS credentials in the Lambda function code",
@@ -48,10 +54,14 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
         "Share IAM user credentials via environment variables"
       ],
       correct: 1,
-      explanation: "IAM roles are the secure way to grant AWS services permissions. Never hardcode credentials or use root account credentials for applications."
+      explanations: [
+        "Never hardcode credentials - this is a major security risk",
+        "Perfect! IAM roles are the secure way to grant AWS services permissions to access other services",
+        "Root account credentials should never be used for applications",
+        "Sharing IAM user credentials is insecure and not the intended pattern for services"
+      ]
     },
     {
-      id: 4,
       question: "A user gets 'Access Denied' when trying to assume an IAM role. What could be the issue?",
       options: [
         "The user's password has expired",
@@ -60,10 +70,14 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
         "The AWS region is incorrect"
       ],
       correct: 1,
-      explanation: "The trust policy defines who can assume a role. If it doesn't include the user or their group, they can't assume the role even if they have the right permissions."
+      explanations: [
+        "Password expiration affects login, not role assumption",
+        "Correct! The trust policy defines who can assume a role. If it doesn't include the user or their group, they can't assume the role",
+        "Computer restarts don't affect IAM permissions",
+        "Region issues would cause different error messages"
+      ]
     },
     {
-      id: 5,
       question: "Nova needs to grant temporary access to an external contractor. What's the most secure approach?",
       options: [
         "Create a permanent IAM user with full access",
@@ -72,27 +86,19 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
         "Create an IAM user and delete it manually later"
       ],
       correct: 2,
-      explanation: "AWS STS (Security Token Service) provides temporary, limited-privilege credentials that automatically expire, making it perfect for temporary access scenarios."
+      explanations: [
+        "Permanent users with full access violate security principles",
+        "Never share root account credentials",
+        "Perfect! AWS STS (Security Token Service) provides temporary, limited-privilege credentials that automatically expire",
+        "Manual processes are error-prone and this still creates permanent credentials initially"
+      ]
     }
   ];
 
-  const handleAnswerSelect = (optionIndex: number) => {
-    if (showFeedback) return;
-    
+  const handleAnswerSelect = (answerIndex: number) => {
     const newAnswers = [...selectedAnswers];
-    newAnswers[currentQuestion] = optionIndex;
+    newAnswers[currentQuestion] = answerIndex.toString();
     setSelectedAnswers(newAnswers);
-  };
-
-  const handleSubmit = () => {
-    const currentAnswer = selectedAnswers[currentQuestion];
-    const isCorrect = currentAnswer === questions[currentQuestion].correct;
-    
-    if (isCorrect) {
-      setScore(score + 1);
-    }
-    
-    setShowFeedback(true);
   };
 
   const handleNext = () => {
@@ -100,35 +106,23 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
       setCurrentQuestion(currentQuestion + 1);
       setShowFeedback(false);
     } else {
-      // Challenge complete
-      const passed = score >= 3; // Need at least 3/5 correct
-      onComplete(passed);
+      // Check all answers
+      const correctAnswers = questions.filter((q, index) => 
+        selectedAnswers[index] === q.correct.toString()
+      ).length;
+      const passed = correctAnswers >= 3; // Need at least 3/5 correct
+      setShowFeedback(true);
+      setTimeout(() => onComplete(passed), 2000);
     }
+  };
+
+  const handleSubmit = () => {
+    setShowFeedback(true);
   };
 
   const currentQ = questions[currentQuestion];
   const selectedAnswer = selectedAnswers[currentQuestion];
-
-  const getOptionClassName = (optionIndex: number, selectedValue: number | undefined) => {
-    const baseClasses = "flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer";
-    const isSelected = selectedValue === optionIndex;
-    
-    if (isSelected) {
-      return `${baseClasses} border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50`;
-    }
-    
-    return `${baseClasses} border-gray-600 hover:border-gray-500 hover:bg-gray-800/50`;
-  };
-
-  const getAnswerFeedback = (selectedValue: number) => {
-    const isCorrect = selectedValue === currentQ.correct;
-    
-    return {
-      isCorrect,
-      explanation: currentQ.explanation,
-      color: isCorrect ? 'text-green-400' : 'text-red-400'
-    };
-  };
+  const isAnswered = selectedAnswer !== undefined;
 
   return (
     <div className="space-y-6">
@@ -136,62 +130,55 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
         <h3 className="text-2xl font-bold text-cyan-400 mb-2">IAM Security & Troubleshooting</h3>
         <p className="text-gray-300">Help Nova master IAM policies and solve access issues</p>
         <div className="text-sm text-gray-400 mt-2">
-          Question {currentQuestion + 1} of {questions.length} | Score: {score}/{currentQuestion + (showFeedback ? 1 : 0)}
+          Question {currentQuestion + 1} of {questions.length}
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full bg-gray-700 rounded-full h-2">
-        <div 
-          className="bg-cyan-500 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
-        />
-      </div>
-
-      {/* Question */}
       <Card className="bg-black/30 border-cyan-500/30">
         <CardContent className="p-6">
-          <h4 className="text-xl font-semibold text-cyan-400 mb-4">{currentQ.question}</h4>
+          <h4 className="text-lg font-semibold text-cyan-400 mb-6">{currentQ.question}</h4>
           
           <div className="space-y-3">
             {currentQ.options.map((option, index) => (
               <div
                 key={index}
                 onClick={() => handleAnswerSelect(index)}
-                className={getOptionClassName(index, selectedAnswer)}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  selectedAnswer === index.toString()
+                    ? 'border-cyan-400 bg-cyan-500/20 ring-2 ring-cyan-400/50'
+                    : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
+                }`}
               >
-                <div className={`w-4 h-4 rounded-full border-2 ${
-                  selectedAnswer === index
-                    ? 'border-blue-400 bg-blue-400'
-                    : 'border-gray-500'
-                }`}></div>
-                <span className="text-gray-300">{option}</span>
+                <div className="flex items-center space-x-3">
+                  <div className={`w-4 h-4 rounded-full border-2 ${
+                    selectedAnswer === index.toString()
+                      ? 'border-cyan-400 bg-cyan-400'
+                      : 'border-gray-500'
+                  }`}></div>
+                  <span className="text-gray-300">{option}</span>
+                </div>
               </div>
             ))}
           </div>
 
-          {showFeedback && selectedAnswer !== undefined && (
-            <div className={`mt-6 p-4 rounded-lg ${
-              selectedAnswer === currentQ.correct
-                ? 'bg-green-900/50 border border-green-500/30'
-                : 'bg-red-900/50 border border-red-500/30'
+          {showFeedback && selectedAnswer && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              selectedAnswer === currentQ.correct.toString()
+                ? 'bg-green-500/20 border border-green-500/30 text-green-400'
+                : 'bg-red-500/20 border border-red-500/30 text-red-400'
             }`}>
-              <h5 className={`font-semibold mb-2 ${getAnswerFeedback(selectedAnswer).color}`}>
-                {selectedAnswer === currentQ.correct ? '🎉 Correct!' : '❌ Not Quite'}
-              </h5>
-              <p className="text-gray-300">{getAnswerFeedback(selectedAnswer).explanation}</p>
+              {currentQ.explanations[parseInt(selectedAnswer)]}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="text-center space-x-4">
+      <div className="text-center">
         {!showFeedback ? (
           <Button 
             onClick={handleSubmit}
-            disabled={selectedAnswer === undefined}
-            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 px-8 py-3 text-lg font-semibold"
+            disabled={!isAnswered}
+            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 px-8 py-3 text-lg font-semibold disabled:opacity-50"
           >
             Submit Answer
           </Button>
@@ -200,9 +187,17 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
             onClick={handleNext}
             className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 px-8 py-3 text-lg font-semibold"
           >
-            {currentQuestion < questions.length - 1 ? 'Next Question' : 'Complete Challenge'}
+            {currentQuestion === questions.length - 1 ? 'Complete Challenge' : 'Next Question'}
           </Button>
         )}
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-gray-700 rounded-full h-2">
+        <div 
+          className="bg-gradient-to-r from-cyan-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+          style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
+        ></div>
       </div>
 
       {/* Echo's Tips */}

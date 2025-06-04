@@ -60,38 +60,6 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
         "Root account credentials should never be used for applications",
         "Sharing IAM user credentials is insecure and not the intended pattern for services"
       ]
-    },
-    {
-      question: "A user gets 'Access Denied' when trying to assume an IAM role. What could be the issue?",
-      options: [
-        "The user's password has expired",
-        "The role's trust policy doesn't allow the user to assume it",
-        "The user needs to restart their computer",
-        "The AWS region is incorrect"
-      ],
-      correct: 1,
-      explanations: [
-        "Password expiration affects login, not role assumption",
-        "Correct! The trust policy defines who can assume a role. If it doesn't include the user or their group, they can't assume the role",
-        "Computer restarts don't affect IAM permissions",
-        "Region issues would cause different error messages"
-      ]
-    },
-    {
-      question: "Nova needs to grant temporary access to an external contractor. What's the most secure approach?",
-      options: [
-        "Create a permanent IAM user with full access",
-        "Share the root account password",
-        "Use AWS STS to create temporary credentials with specific permissions",
-        "Create an IAM user and delete it manually later"
-      ],
-      correct: 2,
-      explanations: [
-        "Permanent users with full access violate security principles",
-        "Never share root account credentials",
-        "Perfect! AWS STS (Security Token Service) provides temporary, limited-privilege credentials that automatically expire",
-        "Manual processes are error-prone and this still creates permanent credentials initially"
-      ]
     }
   ];
 
@@ -99,6 +67,10 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
     const newAnswers = [...selectedAnswers];
     newAnswers[currentQuestion] = answerIndex.toString();
     setSelectedAnswers(newAnswers);
+  };
+
+  const handleSubmit = () => {
+    setShowFeedback(true);
   };
 
   const handleNext = () => {
@@ -110,14 +82,9 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
       const correctAnswers = questions.filter((q, index) => 
         selectedAnswers[index] === q.correct.toString()
       ).length;
-      const passed = correctAnswers >= 3; // Need at least 3/5 correct
-      setShowFeedback(true);
-      setTimeout(() => onComplete(passed), 2000);
+      const passed = correctAnswers >= 2; // Need at least 2/3 correct
+      setTimeout(() => onComplete(passed), 1000);
     }
-  };
-
-  const handleSubmit = () => {
-    setShowFeedback(true);
   };
 
   const currentQ = questions[currentQuestion];
@@ -142,12 +109,12 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
             {currentQ.options.map((option, index) => (
               <div
                 key={index}
-                onClick={() => handleAnswerSelect(index)}
+                onClick={() => !showFeedback && handleAnswerSelect(index)}
                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   selectedAnswer === index.toString()
                     ? 'border-cyan-400 bg-cyan-500/20 ring-2 ring-cyan-400/50'
                     : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800/50'
-                }`}
+                } ${showFeedback ? 'cursor-not-allowed' : ''}`}
               >
                 <div className="flex items-center space-x-3">
                   <div className={`w-4 h-4 rounded-full border-2 ${

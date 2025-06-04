@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import IAMChallenge from './challenges/IAMChallenge';
 import TerraformChallenge from './challenges/TerraformChallenge';
 import TroubleshootingChallenge from './challenges/TroubleshootingChallenge';
 import InfrastructureChallenge from './challenges/InfrastructureChallenge';
+import WordPuzzleChallenge from './challenges/WordPuzzleChallenge';
 
 interface GameLevelProps {
   level: Level;
@@ -21,6 +21,11 @@ const GameLevel: React.FC<GameLevelProps> = ({ level, onComplete, onBack }) => {
 
   const getDialogue = () => {
     switch (level.id) {
+      case 'word-puzzle':
+        return {
+          intro: "Echo: 'Nova, I've intercepted some encrypted AWS communications! Can you help me decode these scrambled service names?'",
+          success: "Nova: 'That was like solving a digital puzzle! I feel much more confident with AWS terminology now.'"
+        };
       case 'ec2-basics':
         return {
           intro: "Nova: 'Echo, I need to launch my first EC2 instance for our client. Can you guide me through the process?'",
@@ -56,6 +61,8 @@ const GameLevel: React.FC<GameLevelProps> = ({ level, onComplete, onBack }) => {
 
   const renderChallenge = () => {
     switch (level.id) {
+      case 'word-puzzle':
+        return <WordPuzzleChallenge onComplete={(success) => setChallengeComplete(success)} />;
       case 'ec2-basics':
         return <EC2Challenge onComplete={(success) => setChallengeComplete(success)} />;
       case 'iam-policy':

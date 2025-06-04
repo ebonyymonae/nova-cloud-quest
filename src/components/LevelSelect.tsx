@@ -12,6 +12,15 @@ interface LevelSelectProps {
 const LevelSelect: React.FC<LevelSelectProps> = ({ onLevelSelect, playerProgress }) => {
   const levels: Level[] = [
     {
+      id: 'word-puzzle',
+      title: 'AWS Code Breaker',
+      description: 'Decode scrambled AWS service names and terminology in this puzzle challenge',
+      difficulty: 'beginner',
+      type: 'drag-drop',
+      xpReward: 75,
+      badge: 'Code Breaker'
+    },
+    {
       id: 'ec2-basics',
       title: 'EC2 Instance Setup',
       description: 'Help Nova launch her first EC2 instance and configure security groups',

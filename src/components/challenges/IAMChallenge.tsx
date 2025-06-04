@@ -76,10 +76,7 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
     }
   ];
 
-  const handleAnswerSelect = (event: React.MouseEvent, optionIndex: number) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
+  const handleAnswerSelect = (optionIndex: number) => {
     if (showFeedback) return;
     
     const newAnswers = [...selectedAnswers];
@@ -87,10 +84,7 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
     setSelectedAnswers(newAnswers);
   };
 
-  const handleSubmit = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
+  const handleSubmit = () => {
     const currentAnswer = selectedAnswers[currentQuestion];
     const isCorrect = currentAnswer === questions[currentQuestion].correct;
     
@@ -101,10 +95,7 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
     setShowFeedback(true);
   };
 
-  const handleNext = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
+  const handleNext = () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setShowFeedback(false);
@@ -117,6 +108,27 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
 
   const currentQ = questions[currentQuestion];
   const selectedAnswer = selectedAnswers[currentQuestion];
+
+  const getOptionClassName = (optionIndex: number, selectedValue: number | undefined) => {
+    const baseClasses = "flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer";
+    const isSelected = selectedValue === optionIndex;
+    
+    if (isSelected) {
+      return `${baseClasses} border-blue-400 bg-blue-500/20 ring-2 ring-blue-400/50`;
+    }
+    
+    return `${baseClasses} border-gray-600 hover:border-gray-500 hover:bg-gray-800/50`;
+  };
+
+  const getAnswerFeedback = (selectedValue: number) => {
+    const isCorrect = selectedValue === currentQ.correct;
+    
+    return {
+      isCorrect,
+      explanation: currentQ.explanation,
+      color: isCorrect ? 'text-green-400' : 'text-red-400'
+    };
+  };
 
   return (
     <div className="space-y-6">
@@ -142,61 +154,32 @@ const IAMChallenge: React.FC<IAMChallengeProps> = ({ onComplete }) => {
           <h4 className="text-xl font-semibold text-cyan-400 mb-4">{currentQ.question}</h4>
           
           <div className="space-y-3">
-            {currentQ.options.map((option, index) => {
-              const isSelected = selectedAnswer === index;
-              const isCorrect = index === currentQ.correct;
-              const isWrong = showFeedback && isSelected && !isCorrect;
-              const shouldHighlight = showFeedback && isCorrect;
-              
-              return (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={(e) => handleAnswerSelect(e, index)}
-                  className={`w-full p-4 rounded-lg border-2 text-left transition-all duration-200 ${
-                    isSelected && !showFeedback
-                      ? 'border-blue-500 bg-blue-500/20 text-blue-300'
-                      : shouldHighlight
-                      ? 'border-green-500 bg-green-500/20 text-green-300'
-                      : isWrong
-                      ? 'border-red-500 bg-red-500/20 text-red-300'
-                      : 'border-gray-600 bg-gray-800/50 text-gray-300 hover:border-gray-500'
-                  } ${showFeedback ? 'cursor-default' : 'cursor-pointer hover:bg-gray-700/50'}`}
-                  disabled={showFeedback}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      isSelected && !showFeedback
-                        ? 'border-blue-500 bg-blue-500'
-                        : shouldHighlight
-                        ? 'border-green-500 bg-green-500'
-                        : isWrong
-                        ? 'border-red-500 bg-red-500'
-                        : 'border-gray-500'
-                    }`}>
-                      {((isSelected && !showFeedback) || shouldHighlight || isWrong) && (
-                        <div className="w-2 h-2 bg-white rounded-full" />
-                      )}
-                    </div>
-                    <span>{option}</span>
-                  </div>
-                </button>
-              );
-            })}
+            {currentQ.options.map((option, index) => (
+              <div
+                key={index}
+                onClick={() => handleAnswerSelect(index)}
+                className={getOptionClassName(index, selectedAnswer)}
+              >
+                <div className={`w-4 h-4 rounded-full border-2 ${
+                  selectedAnswer === index
+                    ? 'border-blue-400 bg-blue-400'
+                    : 'border-gray-500'
+                }`}></div>
+                <span className="text-gray-300">{option}</span>
+              </div>
+            ))}
           </div>
 
-          {showFeedback && (
+          {showFeedback && selectedAnswer !== undefined && (
             <div className={`mt-6 p-4 rounded-lg ${
               selectedAnswer === currentQ.correct
                 ? 'bg-green-900/50 border border-green-500/30'
                 : 'bg-red-900/50 border border-red-500/30'
             }`}>
-              <h5 className={`font-semibold mb-2 ${
-                selectedAnswer === currentQ.correct ? 'text-green-400' : 'text-red-400'
-              }`}>
+              <h5 className={`font-semibold mb-2 ${getAnswerFeedback(selectedAnswer).color}`}>
                 {selectedAnswer === currentQ.correct ? '🎉 Correct!' : '❌ Not Quite'}
               </h5>
-              <p className="text-gray-300">{currentQ.explanation}</p>
+              <p className="text-gray-300">{getAnswerFeedback(selectedAnswer).explanation}</p>
             </div>
           )}
         </CardContent>
